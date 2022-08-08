@@ -1,0 +1,17 @@
+Command %s does not exist. You need help.
+You don't play by the rules. Do you? Command %s does not exist.
+What is %s?
+What do you mean %s?
+I don't know what %s is?
+Are you kidding? %s? Really?
+Can you even type %s correctly?
+Losing my patience with you. %s?
+Wrong!
+%s is wrong!
+pfff... %s. Better luck next time.
+It's hard to type %s correctly?
+%s is a rude mistake.
+%s is a no. Let's try again.
+Don't give me %s anymore. ok?
+%s is a bad move.
+Is it so hard to type %s right?
