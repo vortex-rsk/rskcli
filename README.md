@@ -23,9 +23,9 @@ Available commands:
 ## Example
 `rsk peerList`
 
-## flags
+## Flags
 The `rskcli.conf` has a list of target nodes for the CLI to use.
-If you ant que query a different target then what's configures as default you can use the name of the target server as a flag:
+If you want que query a different target then what's configures as default you can use the name of the target server as a flag:
 
 `rsk -public version`
 
