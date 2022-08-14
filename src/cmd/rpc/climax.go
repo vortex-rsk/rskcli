@@ -22,6 +22,7 @@ type Handler struct {
 type Context struct {
 	Data        map[string]string
 	CommandArgs []string
+	Flags       map[string]bool
 }
 
 var commands []*Command
@@ -30,6 +31,7 @@ var handlers []*Handler
 
 var context map[string]string = make(map[string]string)
 var commandArgs []string
+var flags map[string]bool
 
 func Handle(args []string) {
 
@@ -37,7 +39,7 @@ func Handle(args []string) {
 
 	//cmd := GetCommand(args[0])
 
-	ctx := &Context{context, commandArgs}
+	ctx := &Context{context, commandArgs, flags}
 
 	var found bool = false
 
@@ -60,6 +62,9 @@ func Handle(args []string) {
 
 func AddToContext(key string, val string) {
 	context[key] = val
+}
+func AddFlags(data *map[string]bool) {
+	flags = *data
 }
 
 func AddArgsToContext(args []string) {

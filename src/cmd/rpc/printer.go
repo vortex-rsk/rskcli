@@ -9,15 +9,15 @@ import (
 
 var chains map[string]string = map[string]string{"30": "mainnet", "31": "testnet", "33": "regtest"}
 
-func PrintFooter(elapsed time.Duration, serverName string, serverUrl string) {
+func PrintFooter(elapsed time.Duration, serverName string, ctx *Context) {
 
 	if utils.Config.GetBoolean("printFooter") {
-		result := CallInternal("eth_chainId", []interface{}{}, serverUrl)
+		result, _, _ := CallInternal("SimpleRpcResult", "eth_chainId", []interface{}{}, ctx)
 		chain := "----"
-		if result != nil && result.Result != nil {
-			chain = chains[utils.HexInt(result.Result)]
+		if result != nil && result.(*SimpleRpcResult).Result != nil {
+			chain = chains[utils.HexInt(result.(*SimpleRpcResult).Result)]
 		}
-		var info = time.Now().Format("2006-01-02 15:04:05") + " | " + serverName + " | " + serverUrl + " | " + chain + " | took " + elapsed.String()
+		var info = time.Now().Format("2006-01-02 15:04:05") + " | " + serverName + " | " + ctx.Get("serverUrl") + " | " + chain + " | took " + elapsed.String()
 		fmt.Println(color.LightGrey(info))
 	}
 

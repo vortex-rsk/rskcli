@@ -1,0 +1,21 @@
+CHANGELOG 0.0.2
+
+New methods:
+	balance
+	transactionCount
+	blockTransactionCountByHash
+	blockTransactionCountByNumber
+	uncleCountByBlockHash
+	uncleCountByBlockNumber
+	code
+	blockByHash
+	blockByNumber
+	transactionByHash
+	transactionByBlockHashAndIndex
+	transactionByBlockNumberAndIndex
+
+New flags
+    -clean
+    -jsonreq
+    -jsonresp
+    -json

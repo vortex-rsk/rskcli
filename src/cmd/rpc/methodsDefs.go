@@ -18,7 +18,7 @@ type DefParam struct {
 type Method struct {
 	Names         []string
 	Params        []*DefParam
-	ProcessResult func(result *interface{})
+	ProcessResult func(result *interface{}, ctx *Context)
 	ReturnType    string
 	Description   string
 }
@@ -33,6 +33,7 @@ func init() {
 
 	SIMPLE := "SimpleRpcResult"
 	BLOCK := "BlockRpcResult"
+	TRANSACTION := "TransactionRpcResult"
 
 	methods = []Method{
 		Method{[]string{"clientVersion", "web3ClientVersion", "web3_clientVersion"}, NOPARAMS, processSimple, SIMPLE, "The current node version."},
@@ -189,6 +190,27 @@ func init() {
 			processBlock, BLOCK,
 			"Returns information about a block by hash.",
 		},
+
+		// TRANSACTIONS
+
+		Method{
+			[]string{"transactionByHash", "getTransactionByHash", "ethGetTransactionByHash", "eth_getTransactionByHash"},
+			[]*DefParam{{"hash", true, "Hash of a transaction", false}},
+			processTransaction, TRANSACTION,
+			"Returns the information about the transaction by it's hash.",
+		},
+		Method{
+			[]string{"transactionByBlockHashAndIndex", "getTransactionByBlockHashAndIndex", "ethGetTransactionByBlockHashAndIndex", "eth_getTransactionByBlockHashAndIndex"},
+			[]*DefParam{{"hash", true, "Hash of a block", false}, {"index", true, "index of the transaction in the block", true}},
+			processTransaction, TRANSACTION,
+			"Returns information about a transaction by block hash and transaction index position.",
+		},
+		Method{
+			[]string{"transactionByBlockNumberAndIndex", "getTransactionByBlockNumberAndIndex", "ethGetTransactionByBlockNumberAndIndex", "eth_getTransactionByBlockNumberAndIndex"},
+			[]*DefParam{{"blockNumber|TAG", true, " a block number, or the string \"earliest\", \"latest\" or \"pending\"", true}, {"index", true, "index of the transaction in the block", true}},
+			processTransaction, TRANSACTION,
+			"Returns information about a transaction by block number and transaction index position.",
+		},
 	}
 
 }
@@ -236,11 +258,14 @@ func parseMethodParams(params []*DefParam, rpcName string, name string, args []s
 func stringArrayToInterface(params []*DefParam, values []string) []interface{} {
 	inter := make([]interface{}, len(values))
 	for idx, val := range values {
-		if params[idx].Encoded && !strings.HasPrefix(val, "0x") {
-			intVar, _ := strconv.ParseInt(val, 0, 32)
-			inter[idx] = "0x" + strconv.FormatInt(intVar, 16)
-		} else {
-			inter[idx] = val
+		if len(params)-1 >= idx { // prevent more values passed in the command line then the method expects
+			isBlockTag := utils.IndexOf([]string{"latest", "earliest", "pending"}, val) >= 0
+			if params[idx].Encoded && !strings.HasPrefix(val, "0x") && !isBlockTag {
+				intVar, _ := strconv.ParseInt(val, 0, 32)
+				inter[idx] = "0x" + strconv.FormatInt(intVar, 16)
+			} else {
+				inter[idx] = val
+			}
 		}
 	}
 	return inter

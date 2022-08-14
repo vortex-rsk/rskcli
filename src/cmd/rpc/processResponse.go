@@ -8,43 +8,42 @@ import (
 	"time"
 )
 
-func processSimple(resultArg *interface{}) {
+func processSimple(resultArg *interface{}, ctx *Context) {
 
-	result := (*resultArg).(*SimpleRPCResult)
-
-	if result == nil || result.Result == nil {
-		return
-	}
-
-	fmt.Println(color.Green(result.Result.(string)))
-}
-
-func processHexInt(resultArg *interface{}) {
-
-	result := (*resultArg).(*SimpleRPCResult)
+	result := (*resultArg).(*SimpleRpcResult)
 
 	if result == nil || result.Result == nil {
 		return
 	}
 
-	fmt.Println(color.Green(utils.HexInt(result.Result)))
-
+	utils.PrintResult(result.Result.(string), ctx.Flags["clean"])
 }
 
-func processBool(resultArg *interface{}) {
+func processHexInt(resultArg *interface{}, ctx *Context) {
 
-	result := (*resultArg).(*SimpleRPCResult)
+	result := (*resultArg).(*SimpleRpcResult)
+
+	if result == nil || result.Result == nil {
+		return
+	}
+
+	utils.PrintResult(utils.HexInt(result.Result), ctx.Flags["clean"])
+}
+
+func processBool(resultArg *interface{}, ctx *Context) {
+
+	result := (*resultArg).(*SimpleRpcResult)
 
 	if result.Result == nil {
 		return
 	}
 
-	fmt.Println(color.Green(strconv.FormatBool(result.Result.(bool))))
+	utils.PrintResult(strconv.FormatBool(result.Result.(bool)), ctx.Flags["clean"])
 }
 
-func processSyncing(resultArg *interface{}) {
+func processSyncing(resultArg *interface{}, ctx *Context) {
 
-	result := (*resultArg).(*SimpleRPCResult)
+	result := (*resultArg).(*SimpleRpcResult)
 
 	if result.Result == nil {
 		return
@@ -52,9 +51,9 @@ func processSyncing(resultArg *interface{}) {
 
 	switch val := result.Result.(type) {
 	case bool:
-		fmt.Println(color.Green(strconv.FormatBool(val)))
+		utils.PrintResult(strconv.FormatBool(val), ctx.Flags["clean"])
 	case string:
-		fmt.Println(color.Green(val))
+		utils.PrintResult(val, ctx.Flags["clean"])
 	case map[string]interface{}:
 		var valuesMap map[string]interface{} = result.Result.(map[string]interface{})
 		for key, ele := range valuesMap {
@@ -67,9 +66,9 @@ func processSyncing(resultArg *interface{}) {
 
 }
 
-func processList(resultArg *interface{}) {
+func processList(resultArg *interface{}, ctx *Context) {
 
-	result := (*resultArg).(*SimpleRPCResult)
+	result := (*resultArg).(*SimpleRpcResult)
 
 	if result.Result == nil {
 		return
@@ -81,12 +80,12 @@ func processList(resultArg *interface{}) {
 	}
 }
 
-func processFloat64String(resultArg *interface{}) {
-	result := (*resultArg).(*SimpleRPCResult)
-	fmt.Println(color.Green(fmt.Sprintf("%v", result.Result.(float64))))
+func processFloat64String(resultArg *interface{}, ctx *Context) {
+	result := (*resultArg).(*SimpleRpcResult)
+	utils.PrintResult(fmt.Sprintf("%v", result.Result.(float64)), ctx.Flags["clean"])
 }
 
-func processBlock(resultArg *interface{}) {
+func processBlock(resultArg *interface{}, ctx *Context) {
 
 	result := (*resultArg).(*BlockRpcResult)
 
@@ -107,6 +106,7 @@ func processBlock(resultArg *interface{}) {
 
 	msg := utils.Line("number: ", block.Number) +
 		utils.Line("hash: ", block.Hash) +
+		utils.Line("timestamp: ", block.Timestamp+dateTime) +
 		utils.Line("parent hash: ", block.ParentHash) +
 		utils.Line("nonce: ", block.Nonce) +
 		utils.Line("logsBloom: ", block.LogsBloom) +
@@ -121,49 +121,68 @@ func processBlock(resultArg *interface{}) {
 		utils.Line("size: ", block.Size) +
 		utils.Line("gas limit: ", block.GasLimit) +
 		utils.Line("gas used: ", block.GasUsed) +
-		utils.Line("timestamp: ", block.Timestamp+dateTime) +
-		utils.Pad("uncles("+strconv.Itoa(len(block.Uncles))+"):", 19) + "[\n"
+		utils.Line("minimum gas price: ", block.MinimumGasPrice) +
+		utils.Line("bitcoin merged mining header: ", block.BitcoinMergedMiningHeader) +
+		utils.Line("bitcoin merged mining coinbase transaction: ", block.BitcoinMergedMiningCoinbaseTransaction) +
+		utils.Line("bitcoin merged mining merkle proof: ", block.BitcoinMergedMiningMerkleProof) +
+		utils.Line("hash for merged mining: ", block.HashForMergedMining) +
+		utils.Line("paid fees: ", block.PaidFees) +
+		color.Blue(utils.Pad("uncles("+strconv.Itoa(len(block.Uncles))+"):", 23)+"[\n")
 
 	for idx, val := range block.Uncles {
 		if idx > 0 {
 			msg += "\n"
 		}
-		msg += "\t" + val
+		msg += "\t" + color.Green(val)
 	}
-	msg += "\n]\n"
+	msg += color.Blue("\n]\n")
 
-	msg += utils.Pad("transactions("+strconv.Itoa(len(block.Transactions))+"):", 19) + "[\n"
+	msg += color.Blue(utils.Pad("transactions("+strconv.Itoa(len(block.Transactions))+"):", 19) + "[\n")
 
 	for idx, val := range block.Transactions {
 		if idx > 0 {
 			msg += "\n"
 		}
-		msg += formatTransaction(val.(*Transaction), "\t")
+		msg += formatTransaction(val.(*Transaction), "\t", "SHORT")
 	}
 
-	msg += "\n]"
+	msg += color.Blue("\n]")
 
-	fmt.Println(color.Green(msg))
+	fmt.Println(msg)
 }
 
-func formatTransaction(tx *Transaction, prefix string) string {
+func formatTransaction(tx *Transaction, prefix string, mode string) string {
 
 	var msg string
 
 	if len(tx.Input) == 0 {
-		msg = prefix + tx.Hash
+		msg = color.Green(prefix + tx.Hash)
 	} else {
-		msg = utils.Line(prefix+"from: ", tx.From) +
-			utils.Line(prefix+"to: ", tx.To) +
-			utils.Line(prefix+"value: ", utils.HexInt(tx.Value)) +
-			utils.Line(prefix+"gas: ", utils.HexInt(tx.Gas)) +
-			utils.Line(prefix+"gas price: ", utils.HexInt(tx.GasPrice)) +
-			utils.Line(prefix+"hash: ", tx.Hash) +
-			utils.Line(prefix+"nonce: ", tx.Nonce) +
-			utils.Line(prefix+"index: ", tx.TransactionIndex)
-		//utils.Line(prefix+"input: ", tx.Input) +
-		//utils.Line(prefix+"(V,R,S): ", fmt.Sprintf("%s,%s,%s", tx.V, tx.R, tx.S))
+
+		if mode == "FULL" {
+			msg += utils.TxLine(prefix+"block number: ", utils.HexInt(tx.BlockNumber)) +
+				utils.TxLine(prefix+"block hash: ", tx.BlockHash)
+		}
+
+		msg += utils.TxLine(prefix+"hash: ", tx.Hash) +
+			utils.TxLine(prefix+"index: ", utils.HexInt(tx.TransactionIndex)) +
+			utils.TxLine(prefix+"from: ", tx.From) +
+			utils.TxLine(prefix+"to: ", tx.To) +
+			utils.TxLine(prefix+"value: ", utils.HexInt(tx.Value)) +
+			utils.TxLine(prefix+"gas: ", utils.HexInt(tx.Gas)) +
+			utils.TxLine(prefix+"gas price: ", utils.HexInt(tx.GasPrice)) +
+			utils.TxLine(prefix+"nonce: ", utils.HexInt(tx.Nonce)) +
+			utils.TxLine(prefix+"input: ", tx.Input) +
+			utils.TxLine(prefix+"V: ", tx.V) +
+			utils.TxLine(prefix+"R: ", tx.R) +
+			utils.TxLine(prefix+"S: ", tx.S)
 	}
 
 	return msg
+}
+
+func processTransaction(resultArg *interface{}, ctx *Context) {
+	result := (*resultArg).(*TransactionRpcResult)
+
+	fmt.Print(formatTransaction(&result.Result, "", "FULL"))
 }

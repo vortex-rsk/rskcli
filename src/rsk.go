@@ -27,10 +27,17 @@ func main() {
 
 	utils.LoadConfig()
 
+	clean := flag.Bool("clean", false, "-clean")
+	jsonreq := flag.Bool("jsonreq", false, "-jsonreq")
+	jsonresp := flag.Bool("jsonresp", false, "-jsonresp")
+	json := flag.Bool("json", false, "-json")
+	nofooter := flag.Bool("nofooter", false, "-nofooter")
+
 	setUpServerFlags()
 	flag.Parse()
 
-	//rpc.InitMethods()
+	// needs to be done after the flag.parse
+	globalFlags := &map[string]bool{"clean": *clean, "jsonreq": *jsonreq, "jsonresp": *jsonresp, "json": *json, "nofooter": *nofooter}
 
 	serverName := evaluateTargetServer()
 
@@ -49,8 +56,9 @@ func main() {
 	rpc.AddToContext("serverName", serverName)
 	rpc.AddToContext("serverUrl", serverUrl)
 	rpc.AddArgsToContext(commandArgs)
+	rpc.AddFlags(globalFlags)
 
-	rpc.Handle(args)
+	rpc.Handle(commandArgs)
 
 	//generateRandomPrivateKey()
 
@@ -95,13 +103,23 @@ func evaluateTargetServer() string {
 	return server
 }
 
+func setUpFlags() *map[string]*bool {
+	ret := make(map[string]*bool)
+	ret["clean"] = flag.Bool("clean", false, "-clean")
+	ret["jsonreq"] = flag.Bool("jsonreq", false, "-jsonreq")
+	ret["jsonresp"] = flag.Bool("jsonresp", false, "-jsonresp")
+	ret["json"] = flag.Bool("json", false, "-json")
+
+	return &ret
+}
+
 func setUpServerFlags() {
 	servers := utils.Config.GetStringMap("servers")
 
 	availableTargets = make(map[string]*bool)
 
 	for key, _ := range servers {
-		availableTargets[key] = flag.Bool(key, false, "a bool")
+		availableTargets[key] = flag.Bool(key, false, "-"+key)
 	}
 }
 
